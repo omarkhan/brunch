@@ -1,9 +1,8 @@
-fs        = require 'fs'
-path      = require 'path'
-helpers   = require '../helpers'
-colors    = require('../../vendor/termcolors').colors
-stitch    = require 'stitch'
-_         = require 'underscore'
+fs      = require 'fs'
+path    = require 'path'
+helpers = require '../helpers'
+colors  = require('../../vendor/termcolors').colors
+_       = require 'underscore'
 
 options  = require('../brunch').options
 Compiler = require('./index').Compiler
@@ -13,6 +12,8 @@ class exports.StitchCompiler extends Compiler
     [/\.coffee$/, /src\/.*\.js$/, new RegExp("#{options.templateExtension}$")]
 
   compile: (files) ->
+    stitch = require 'stitch' # lazy load dependencies
+
     # update package dependencies in case a dependency was added or removed
     this.package().dependencies = this.collectDependencies() if _.any(files, (file) -> file.match(/src\/vendor\//))
 

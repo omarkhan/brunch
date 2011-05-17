@@ -1,8 +1,7 @@
-fs        = require 'fs'
-path      = require 'path'
-helpers   = require '../helpers'
-colors    = require('../../vendor/termcolors').colors
-stylus    = require 'stylus'
+fs      = require 'fs'
+path    = require 'path'
+helpers = require '../helpers'
+colors  = require('../../vendor/termcolors').colors
 
 options  = require('../brunch').options
 Compiler = require('./index').Compiler
@@ -12,6 +11,8 @@ class exports.StylusCompiler extends Compiler
     [/\.styl$/]
 
   compile: (files) ->
+    stylus = require 'stylus' # lazy load dependencies
+
     main_file_path = path.join(options.brunchPath, 'src/app/styles/main.styl')
     fs.readFile(main_file_path, 'utf8', (err, data) =>
       if err?

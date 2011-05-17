@@ -2,7 +2,6 @@ fs      = require 'fs'
 path    = require 'path'
 helpers = require '../helpers'
 colors  = require('../../vendor/termcolors').colors
-less    = require 'less'
 
 options  = require('../brunch').options
 Compiler = require('./index').Compiler
@@ -12,6 +11,8 @@ class exports.LessCompiler extends Compiler
     [/\.less$/]
 
   compile: (files) ->
+    less = require 'less' # lazy load dependencies
+
     main_file_path = path.join(options.brunchPath, 'src/app/styles/main.less')
     fs.readFile(main_file_path, 'utf8', (err, data) =>
       if err?

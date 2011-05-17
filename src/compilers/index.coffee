@@ -1,5 +1,5 @@
-_ = require 'underscore'
 helpers = require '../helpers'
+_       = require 'underscore'
 
 class exports.Compiler
   # should be overwritten by every compiler subclass
