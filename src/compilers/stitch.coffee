@@ -16,8 +16,6 @@ class exports.StitchCompiler extends Compiler
     [/\.coffee$/, /src\/.*\.js$/, new RegExp("#{@options.templateExtension}$")]
 
   compile: (files) ->
-    stitch = require 'stitch' # lazy load dependencies
-
     # update package dependencies in case a dependency was added or removed
     @package().dependencies = @collectDependencies() if _.any(files, (file) -> file.match(/src\/vendor\//))
 
@@ -36,6 +34,8 @@ class exports.StitchCompiler extends Compiler
     )
 
   package: ->
+    stitch = require 'stitch' # lazy load dependencies
+
     @_package ?= stitch.createPackage (
       dependencies: @collectDependencies()
       paths: [path.join(@options.brunchPath, 'src/app/')]
