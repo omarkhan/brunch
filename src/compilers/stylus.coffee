@@ -3,43 +3,42 @@ path    = require 'path'
 helpers = require '../helpers'
 colors  = require('../../vendor/termcolors').colors
 
-options  = require('../brunch').options
-Compiler = require('./index').Compiler
+Compiler = require('./base').Compiler
+
+try
+  nib = require('nib')()
+catch error
+  false
 
 class exports.StylusCompiler extends Compiler
+
   filePattern: ->
     [/\.styl$/]
 
   compile: (files) ->
     stylus = require 'stylus' # lazy load dependencies
 
-    main_file_path = path.join(options.brunchPath, 'src/app/styles/main.styl')
-    fs.readFile(main_file_path, 'utf8', (err, data) =>
+    mainFilePath = path.join(@options.brunchPath, 'src/app/styles/main.styl')
+    fs.readFile(mainFilePath, 'utf8', (err, data) =>
       if err?
         helpers.log colors.lred('stylus err: ' + err)
       else
         compiler = stylus(data)
-          .set('filename', main_file_path)
+          .set('filename', mainFilePath)
           .set('compress', true)
-          .include(path.join(options.brunchPath, 'src'))
+          .include(path.join(@options.brunchPath, 'src'))
 
-        if this.nib()
-          compiler.use(this.nib())
+        if nib
+          compiler.use nib
 
-        compiler.render (err, css) ->
+        compiler.render (err, css) =>
           if err?
             helpers.log colors.lred('stylus err: ' + err)
           else
-            fs.writeFile(path.join(options.buildPath, 'web/css/main.css'), css, 'utf8', (err) =>
+            fs.writeFile(path.join(@options.buildPath, 'web/css/main.css'), css, 'utf8', (err) =>
               if err?
                 helpers.log colors.lred('stylus err: ' + err)
               else
                 helpers.log "stylus:   #{colors.green('compiled', true)} main.css\n"
             )
     )
-
-  nib: ->
-    @_nib ||= try
-      if require('nib') then require('nib')() else false
-    catch error
-      false
