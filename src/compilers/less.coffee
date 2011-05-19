@@ -13,14 +13,14 @@ class exports.LessCompiler extends Compiler
   compile: (files) ->
     less = require 'less' # lazy load dependencies
 
-    main_file_path = path.join(@options.brunchPath, 'src/app/styles/main.less')
-    fs.readFile(main_file_path, 'utf8', (err, data) =>
+    mainFilePath = path.join(@options.brunchPath, 'src/app/styles/main.less')
+    fs.readFile(mainFilePath, 'utf8', (err, data) =>
       if err?
         helpers.log colors.lred('less err:   ' + err)
       else
         parser = new less.Parser(
           paths: [path.join(@options.brunchPath, 'src')],
-          filename: main_file_path
+          filename: mainFilePath
         )
 
         parser.parse data, (err, tree) ->
