@@ -46,6 +46,7 @@ exports.run = (options) ->
       scripts: [
         path.join(brunchdir, 'build/web/js/app.js')
         path.resolve(__dirname, '../vendor/jasmine.js')
+        path.resolve(__dirname, '../vendor/sinon-1.2.0.js')
         '/tmp/brunchtest/specs.js'
       ]
       done: (errors, window) ->
