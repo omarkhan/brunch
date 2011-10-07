@@ -1,1 +1,1 @@
-# Write your jasmine specs here
+# Write your [jasmine](http://pivotal.github.com/jasmine/) specs here.

@@ -5,7 +5,7 @@ uglify = require "uglify-js"
 _ = require "underscore"
 
 helpers = require "../helpers"
-{Compiler} = require("./base")
+{Compiler} = require "./base"
 
 
 class exports.StitchCompiler extends Compiler
@@ -40,7 +40,7 @@ class exports.StitchCompiler extends Compiler
 
   compile: (files, callback) ->
     # update package dependencies in case a dependency was added or removed
-    if _.any files, ((file) -> file.match /src\/vendor\//)
+    if files.some((file) -> file.match /src\/vendor\//)
       @package().dependencies = @collectDependencies()
 
     @package().compile (error, source) =>
@@ -50,4 +50,4 @@ class exports.StitchCompiler extends Compiler
       outPath = @getBuildPath "web/js/app.js"
       fs.writeFile outPath, source, (error) =>
         return @logError "couldn't write compiled file. #{error}" if error?
-        callback(@constructor.name)
+        callback @constructor.name

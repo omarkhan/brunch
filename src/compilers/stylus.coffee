@@ -31,4 +31,4 @@ class exports.StylusCompiler extends Compiler
         fs.writeFile main, css, "utf8", (error) =>
           return @logError error if error?
           @log()
-          callback(@constructor.name)
+          callback @constructor.name
