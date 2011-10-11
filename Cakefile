@@ -46,11 +46,12 @@ task "test", "Run test (spec) suite", ->
   re =
     helper: /[-_]helper\.coffee$/
     spec: /spec\.coffee$/i
-  specFolder = path.join __dirname, "spec"
-  callback = (runner, log) -> sys.print "\n"
+  specFolder = path.join __dirname, "test"
+  callback = (runner, log) -> process.kill 0
 
   loadHelpersInFolder specFolder, re.helper
-  executeSpecsInFolder specFolder, callback, false, true, re.spec, false
+  # Magic.
+  executeSpecsInFolder specFolder, callback, no, yes, no, re.spec, {}
 
 
 ## Publishing ##

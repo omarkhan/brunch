@@ -1,12 +1,10 @@
-require.paths.unshift __dirname + "/../src"
-
-{StitchCompiler} = require(__dirname + "/../src/compilers")
+{StitchCompiler} = require __dirname + "/../src/compilers"
 
 
 describe "package initializing", ->
   it "should create a valid stitch package", ->
     options =
-      brunchPath: "spec/fixtures/base"
+      appPath: "test/fixtures/base"
       dependencies: [
         "ConsoleDummy.js",
         "jquery-1.6.2.js",
@@ -17,7 +15,7 @@ describe "package initializing", ->
     compiler = new StitchCompiler options
 
     package = compiler.package()
-    expect(package.paths).toEqual ["spec/fixtures/base/src/app/"]
+    expect(package.paths).toEqual ["test/fixtures/base/src/app/"]
     expect(package.dependencies[0]).toEqual(
-      "spec/fixtures/base/src/vendor/ConsoleDummy.js"
+      "test/fixtures/base/src/vendor/ConsoleDummy.js"
     )

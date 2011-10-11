@@ -1,5 +1,3 @@
-require.paths.unshift __dirname + "/../src"
-
 fs = require "fs"
 
 brunch  = require "../src/brunch"
@@ -10,10 +8,8 @@ describe "new project", ->
     beforeEach ->
       created = no
       brunch.new
-        brunchPath: "brunch"
+        appPath: "brunch"
         buildPath: "brunch/build"
-        projectTemplate: "base"
-        templateExtension: "eco"
       , -> created = yes
       waitsFor (-> created), 400
 
@@ -30,10 +26,8 @@ describe "new project", ->
     beforeEach ->
       created = no
       brunch.new
-        brunchPath: "js/client"
+        appPath: "js/client"
         buildPath: "js/output"
-        projectTemplate: "base"
-        templateExtension: "eco"
       , -> created = yes
       waitsFor (-> created), 400
 

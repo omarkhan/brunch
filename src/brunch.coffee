@@ -4,7 +4,7 @@ root = __dirname + "/../"
 
 fs = require "fs"
 path = require "path"
-fileUtil = require "file"
+fileUtil = require "file" 
 
 helpers = require "./helpers"
 testrunner = require "./testrunner"
@@ -13,7 +13,17 @@ testrunner = require "./testrunner"
 exports.VERSION = require("./package").version
 
 
-class Compilers
+exports.Brunch = class Brunch
+  defaultConfig:
+    appPath: "brunch"
+    dependencies: []
+    minify: no
+    mvc: "backbone"
+    templates: "eco"
+    styles: "css"
+    tests: "jasmine"
+    templateExtension: "eco"  # Temporary.
+
   _createDirectories: (buildPath, directories...) ->
     for dirPath in directories
       fileUtil.mkdirsSync path.join(buildPath, dirPath), 0755
@@ -22,9 +32,9 @@ class Compilers
   # path to the build directory.
   _createExampleIndex: (filePath, buildPath) ->
     # Fixing relative path.
-    brunchPath = path.join @options.brunchPath, "/"
-    if buildPath.indexOf(brunchPath) is 0
-      relativePath = buildPath.substr brunchPath.length
+    appPath = path.join @options.appPath, "/"
+    if buildPath.indexOf(appPath) isnt -1
+      relativePath = buildPath.substr appPath.length
     else
       relativePath = path.join "..", buildPath
 
@@ -46,60 +56,72 @@ class Compilers
     """
     fs.writeFileSync filePath, index
 
-  compile: (compilers, callback) ->
+  _compile: (compilers, callback) ->
     total = @compilers.length
     for compiler in compilers
-      do => compiler.compile ["."], =>
-        # Pop current compiler from queue.
-        total -= 1
-        # Execute callbacks if compiler queue is empty.
-        unless total
-          testrunner.run @options
-          callback?() 
+      do (compiler) =>
+        compiler.compile ["."], =>
+          # Pop current compiler from queue.
+          total -= 1
+          # Execute callbacks if compiler queue is empty.
+          if total <= 0
+            testrunner.run @options, callback
 
-  create: (callback) ->
+  new: (callback) ->
     templatePath = path.join module.id, "/../../template/base"
-    path.exists @options.brunchPath, (exists) =>
+    path.exists @options.appPath, (exists) =>
       if exists
         helpers.logError "[Brunch]: can't create project;
         directory already exists"
         return
 
-      fileUtil.mkdirsSync @options.brunchPath, 0755
+      fileUtil.mkdirsSync @options.appPath, 0755
       fileUtil.mkdirsSync @options.buildPath, 0755
 
-      helpers.recursiveCopy templatePath, @options.brunchPath, =>
-        index = path.join @options.brunchPath, "index.html"
+      helpers.recursiveCopy templatePath, @options.appPath, =>
+        index = path.join @options.appPath, "index.html"
         @_createExampleIndex index, @options.buildPath
-        helpers.logSuccess "[Brunch]: created brunch directory layout"
+        helpers.log "[Brunch]: created brunch directory layout"
         callback?()
+    @
 
   build: (callback) ->
     @_createDirectories @options.buildPath, "web/css", "web/js"
-    @compile @compilers, callback
+    @_compile @compilers, callback
+    @
 
   watch: (callback) ->
     @_createDirectories @options.buildPath, "web/css", "web/js"
-    opts =
-      path: path.join @options.brunchPath, "src"
-      callOnAdd: yes
-    helpers.watchDirectory opts, (file) =>
+    sourcePath = path.join @options.appPath, "src"
+    timer = null
+
+    @watcher.add(sourcePath).onChange (file) =>
       for compiler in @compilers when compiler.matchesFile file
         return compiler.onFileChanged file, =>
-          testrunner.run @options
-          callback?()
+          clearTimeout timer if timer
+          # TODO: go full async & get rid of timers.
+          timer = setTimeout (=> testrunner.run @options, callback), 20
+    @
 
-  constructor: (@options) ->
+  stopWatching: (callback) ->
+    @watcher.clear()
+
+  constructor: (options) ->
+    helpers.extend @defaultConfig, options
+    options.buildPath ?= path.join options.appPath, "build/"
+    # Nomnom arg parser creates properties in options for internal use
+    # We don't need them.
+    ignored = ["_"].concat [0..10]
+    for prop in ignored when prop of options
+      delete options[prop]
+    @options = options
+
     all = require "./compilers"
     @compilers = (new compiler @options for name, compiler of all)
+    @watcher = new helpers.Watcher
 
 
-# Project skeleton generator.
-exports.new = (options, callback) ->
-  (new Compilers options).create callback
-
-exports.watch = (options) ->
-  (new Compilers options).watch()
-
-exports.build = (options) ->
-  (new Compilers options).build()
+for method in ["new", "build", "watch"]
+  do (method) ->
+    exports[method] = (options, callback) ->
+      (new Brunch options)[method] callback

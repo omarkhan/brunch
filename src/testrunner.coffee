@@ -4,7 +4,7 @@ path = require "path"
 coffee = require "coffee-script"
 jsdom = require "jsdom"
 
-
+helpers = require "./helpers"
 {TerminalReporter} = require __dirname + "/../vendor/reporter"
 
 
@@ -13,26 +13,24 @@ jsdom = require "jsdom"
 TEMP = "/tmp/brunchtest"
 
 
-exports.run = (options) ->
-  brunchdir = path.resolve options.brunchPath
+exports.run = (options, callback) ->
+  brunchdir = path.resolve options.appPath
   testdir = path.join brunchdir, "test"
-  console.log "Running tests in " + testdir
-
-  # Compiles specs in `dir` and appends the result to `list`
-  getSpecFiles = (dir, list) ->
-    for f in fs.readdirSync(dir)
-      filepath = path.join(dir, f)
-      ext = path.extname(filepath)
+  specs = []
+  helpers.log "Running tests in #{testdir}"
+  # Compiles specs in `dir` and appends the result to `specs`.
+  getSpecFiles = (dir) ->
+    for f in fs.readdirSync dir
+      filepath = path.join dir, f
+      ext = path.extname filepath
       if ext in [".coffee", ".js"]
         spec = fs.readFileSync filepath, "utf-8"
-        spec = coffee.compile(spec) if ext is ".coffee"
-        list.push spec
+        spec = coffee.compile spec if ext is ".coffee"
+        specs.push spec
       else if fs.statSync(filepath).isDirectory()
-        getSpecFiles filepath, list
-
-  specs = []
-  getSpecFiles testdir, specs
-
+        getSpecFiles filepath
+  
+  getSpecFiles testdir
   # Remove temporary folder if it already exists
   try
     if fs.statSync("/tmp/brunchtest").isDirectory()
@@ -41,10 +39,9 @@ exports.run = (options) ->
       fs.rmdirSync TEMP
 
   fs.mkdir TEMP, 0755, ->
-    # Write specs to temporary folder
+    # Write specs to temporary folder.
     fs.writeFileSync TEMP + "/specs.js", specs.join "\n"
-
-    # Run specs in fake browser
+    # Run specs in fake browser.
     jsdom.env
       html: path.join brunchdir, "index.html"
       scripts: [
@@ -52,13 +49,18 @@ exports.run = (options) ->
         path.resolve __dirname, "../vendor/jasmine.js"
         "/tmp/brunchtest/specs.js"
       ]
-      done: (errors, window) ->
+      done: (error, window) ->
+        helpers.logError error if error?
+        # If we're testing brunch itself, we don't need to view the output.
+        # TODO: move this to TerminalReporter.
+        stream = if global.jasmine then (->) else sys.print
+
         jasmineEnv = window.jasmine.getEnv()
         jasmineEnv.reporter = new TerminalReporter
-          print: sys.print
+          print: stream
           verbose: no
           color: yes
           onComplete: null
           stackFilter: null
         jasmineEnv.execute()
-
+        callback?()
