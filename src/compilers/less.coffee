@@ -13,10 +13,10 @@ class exports.LessCompiler extends Compiler
     fs.readFile mainFilePath, "utf8", (error, data) =>
       return @logError error if error?
       parser = new less.Parser
-        paths: [@getAppPath "src"]
+        paths: [@getAppPath "src/app/styles/"]
         filename: mainFilePath
 
-      parser.parse data, (error, tree) ->
+      parser.parse data, (error, tree) =>
         return @logError error if error?
         css = tree.toCSS(compress: true)
         main = @getBuildPath "web/css/main.css"
