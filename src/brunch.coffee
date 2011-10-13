@@ -19,10 +19,10 @@ exports.Brunch = class Brunch
     dependencies: []
     minify: no
     mvc: "backbone"
-    templates: "eco"
+    templates: "jade"
     styles: "css"
     tests: "jasmine"
-    templateExtension: "eco"  # Temporary.
+    templateExtension: "jade"  # Temporary.
 
   _createDirectories: (buildPath, directories...) ->
     for dirPath in directories
