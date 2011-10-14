@@ -67,39 +67,36 @@ class exports.Watcher extends EventEmitter
   constructor: ->
     @watched = []
 
-  _justAdded: ->
-    setTimeout (=> @emit "change")
+  _watch: (item, callback) ->
+    fs.watchFile item, persistent: yes, interval: 500, (curr, prev) =>
+      callback? item unless curr.mtime.getTime() is prev.mtime.getTime()
 
-  _handleFile: (file, add) ->
-    if add
-      unless file in @watched
-        @emit "change", file
-        @watched.push file
-      fs.watchFile file, {persistent: yes, interval: 500}, (curr, prev) =>
-        unless curr.mtime.getTime() is prev.mtime.getTime()
-          @emit "change", file
-    else
-      fs.unwatchFile file
+  _handleFile: (file) ->
+    return if file in @watched
+    emit = (file) =>
+      @emit "change", file
+    @watched.push file
+    @_watch file, emit
+    emit file
 
-  _handleDir: (dir, add) ->
-    fs.readdir dir, (error, files) =>
-      for file in files
-        @_handle (path.join dir, file), add
+  _handleDir: (directory) ->
+    read = (directory) =>
+      fs.readdir directory, (error, files) =>
+        for file in files
+          @_handle (path.join directory, file)
+    read directory
+    @_watch directory, read
 
-  _handle: (file, add) ->
+  _handle: (file) ->
     fs.realpath file, (error, filePath) =>
       return exports.logError error if error?
       fs.stat file, (error, stats) =>
         return exports.logError error if error?
-        @_handleFile file, add if stats.isFile()
-        @_handleDir file, add if stats.isDirectory()
+        @_handleFile file if stats.isFile()
+        @_handleDir file if stats.isDirectory()
 
   add: (file) ->
-    @_handle file, yes
-    @
-
-  remove: (file) ->
-    @_handle file, no
+    @_handle file
     @
 
   onChange: (callback) ->
@@ -159,18 +156,24 @@ exports.isTesting = ->
   "jasmine" of global
 
 
-hasGrowl = no
-exec "which growlnotify", (error) ->
-  hasGrowl = yes unless error?
 
-hasNotifySend = no
-exec "which notify-send", (error) ->
-  hasNotifySend = yes unless error?
+exports.notify = (title, text) -> null
 
 
-exports.growl = (title, text) ->
-  if hasGrowl then spawn "growlnotify", [title, "-m", text]
-  else if hasNotifySend then spawn "notify-send", [title, text]
+# Map of possible system notifiers in format
+# Key - "name of system command that would be executed".
+# Value - args, with which the command would be spawned.
+# E.g. spawn growlnotify, [title, "-m", text]
+exports.notifiers = notifiers =
+  growlnotify: (title, text) -> [title, "-m", text]
+  "notify-send": (title, text) -> [title, text]
+
+
+# Try to determine right system notifier.
+for name, transform of notifiers
+  do (name, transform) ->
+    exec "which #{name}", (error) ->
+      exports.notify = ((args...) -> spawn name, transform args...) unless error?
 
 
 exports.log = (text, color = "green", isError = no) ->
@@ -178,7 +181,7 @@ exports.log = (text, color = "green", isError = no) ->
   # TODO: log stdout on testing output end.
   output = "#{formatDate(color)} #{text}\n"
   stream.write output, "utf8" unless exports.isTesting()
-  exports.growl "Brunch error", text if isError
+  exports.notify "Brunch error", text if isError
 
 
 exports.logError = (text) -> exports.log text, "red", yes
