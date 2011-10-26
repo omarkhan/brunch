@@ -11,7 +11,8 @@ class exports.LessCompiler extends Compiler
     mainFilePath = @getAppPath "src/app/styles/main.less"
 
     fs.readFile mainFilePath, "utf8", (error, data) =>
-      return @logError error if error?
+      if error?
+        return @logerror "#{error.message} in #{error.filename}"
       parser = new less.Parser
         paths: [@getAppPath "src/app/styles/"]
         filename: mainFilePath
