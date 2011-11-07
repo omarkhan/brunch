@@ -18,7 +18,7 @@ class exports.LessCompiler extends Compiler
 
       parser.parse data, (error, tree) =>
         if error?
-          return @logerror "#{error.message} in #{error.filename}"
+          return @logError "#{error.message} in #{error.filename}"
         css = tree.toCSS(compress: true)
         main = @getBuildPath "web/css/main.css"
         fs.writeFile main, css, "utf8", (error) =>
