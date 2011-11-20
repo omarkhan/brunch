@@ -1,21 +1,22 @@
-sys = require "sys"
-fs = require "fs"
-path = require "path"
-coffee = require "coffee-script"
-jsdom = require "jsdom"
+sys = require 'sys'
+fs = require 'fs'
+path = require 'path'
+coffee = require 'coffee-script'
+jsdom = require 'jsdom'
 
-helpers = require "./helpers"
-{TerminalReporter} = require __dirname + "/../vendor/reporter"
+helpers = require './helpers'
+{TerminalReporter} = require '../vendor/reporter'
 
 
 # TODO: find a better way to do this.
 # https://github.com/brunch/brunch/pull/111#issuecomment-2244266
-TEMP = "/tmp/brunchtest"
+TEMP = '/tmp/brunchtest'
+SPECFILE = path.join TEMP, 'specs.js'
 
 
 exports.run = (options, callback) ->
   brunchdir = path.resolve options.appPath
-  testdir = path.join brunchdir, "test"
+  testdir = path.join brunchdir, 'test'
   specs = []
   helpers.log "Running tests in #{testdir}"
   # Compiles specs in `dir` and appends the result to `specs`.
@@ -23,9 +24,9 @@ exports.run = (options, callback) ->
     for f in fs.readdirSync dir
       filepath = path.join dir, f
       ext = path.extname filepath
-      if ext in [".coffee", ".js"]
-        spec = fs.readFileSync filepath, "utf-8"
-        spec = coffee.compile spec if ext is ".coffee"
+      if ext in ['.coffee', '.js']
+        spec = fs.readFileSync filepath, 'utf-8'
+        spec = coffee.compile spec if ext is '.coffee'
         specs.push spec
       else if fs.statSync(filepath).isDirectory()
         getSpecFiles filepath
@@ -33,22 +34,21 @@ exports.run = (options, callback) ->
   getSpecFiles testdir
   # Remove temporary folder if it already exists
   try
-    if fs.statSync("/tmp/brunchtest").isDirectory()
+    if fs.statSync('/tmp/brunchtest').isDirectory()
       for f in fs.readdirSync TEMP
         fs.unlinkSync path.join TEMP, f
       fs.rmdirSync TEMP
 
   fs.mkdir TEMP, 0755, ->
     # Write specs to temporary folder.
-    fs.writeFileSync TEMP + "/specs.js", specs.join "\n"
+    fs.writeFileSync SPECFILE, specs.join '\n'
     # Run specs in fake browser.
     jsdom.env
-      html: path.join brunchdir, "index.html"
+      html: path.join brunchdir, 'index.html'
       scripts: [
-        path.resolve options.buildPath, "web/js/app.js"
-        path.resolve __dirname, "../vendor/jasmine.js"
-        path.resolve __dirname, "../vendor/sinon-1.2.0.js"
-        "/tmp/brunchtest/specs.js"
+        path.resolve options.buildPath, 'web/js/app.js'
+        path.resolve __dirname, '../vendor/jasmine.js'
+        SPECFILE
       ]
       done: (error, window) ->
         helpers.logError error if error?
@@ -59,7 +59,7 @@ exports.run = (options, callback) ->
         jasmineEnv = window.jasmine.getEnv()
         jasmineEnv.reporter = new TerminalReporter
           print: stream
-          verbose: no
+          verbose: options.verbose
           color: yes
           onComplete: null
           stackFilter: null
