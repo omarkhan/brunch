@@ -48,6 +48,7 @@ exports.run = (options, callback) ->
       scripts: [
         path.resolve options.buildPath, 'web/js/app.js'
         path.resolve __dirname, '../vendor/jasmine.js'
+        path.resolve __dirname, '../vendor/sinon-1.2.0.js'
         SPECFILE
       ]
       done: (error, window) ->
